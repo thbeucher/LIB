@@ -75,7 +75,7 @@ def readParams(pathToParam):
         if a[0] == "nonbhl":
             t = a[1].split(",")
             t = [int(el) for el in t]
-            p[a[0]] = np.asarray(t)
+            p[a[0]] = t
         else:
             p[a[0]] = float(a[1])
 
