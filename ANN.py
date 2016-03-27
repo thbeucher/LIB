@@ -19,43 +19,68 @@ class MLP:
 
     '''
 
-    def __init__(self, NumberOfInputs, NumberOfOutputs, NumberOfHiddenLayers, NumberOfNeuronsByHiddenLayer, activationFunction):
+    def __init__(self, networkStruct):
         '''
-        Creates a neural network and the weight matrix associated
+        Inits the neural network
 
-        Inputs:
-            NumberOfInputs - int
-            NumberOfOutputs - int
-            NumberOfHiddenLayers - int
-            NumberOfNeuronsByHiddenLayer - python list - give the number of neurons for each hidden layer
-            activationFunction - int - 0 = sigmoide / 1 = tanh
+        Input: networkStructure - python list - give the number of neuron for each layers
+        
+        '''
+        self.nbLayer = len(networkStruct)
+        self.networkStruct = networkStruct
+        self.basicInit()
+
+    def basicInit(self):
+        '''
+        Random initializes of biaises and weights using gaussian distribution with mean 0 and standard deviation 1
+
+        '''    
+        self.weights = [np.random.randn(nbNeu, nbIn) for nbNeu, nbIn in zip(self.networkStruct[1:], self.networkStruct[:-1])]
+        self.biases = [np.random.randn(nbNeu,1) for nbNeu in self.networkStruct[1:]]
+
+    def feedForward(self, a):
+        '''
+        Computes the output of the network for an input a
+
+        Input: a - numpy array or numpy list - input for the network
+
+        Output: a - numpy array - output of the network
 
         '''
-        assert (len(NumberOfNeuronsByHiddenLayer) == NumberOfHiddenLayers), "len of NumberOfNeuronsByHiddenLayer list must be equal to NumberOfHiddenLayers"
-        self.noi = NumberOfInputs
-        self.activationFunctionChoosed = activationFunction
-        self.listOfActivationFunctions = [self.sigmoidActivation, self.hyperbolicTanActivation]
-        self.neuralNet(NumberOfInputs, NumberOfOutputs, NumberOfHiddenLayers, NumberOfNeuronsByHiddenLayer)
+        for w, b in zip(self.weights, self.biases):
+            a = self.sigmoid(np.dot(w, a) + b)
+        return a
 
-    def neuralNet(self, noi, noo, nohl, nonbhl):
+    def update(self, batch, eta):
         '''
-        Creates the artificial neural network
+        Update the network's weights and biases by applying gradient descend using backpropagation
 
-        for each layer, a matrix numberOfInput*numberOfNeuron is created and also a vector of bias for each neuron
+        Input: batch - python list - list of tuples (x,y) where x in the input and y the desired output
+               eta - float - learning rate
+  
         '''
-        ANN = []
-        #create first hidden layer
-        ANN.append((np.random.uniform(-1, 1, (noi, nonbhl[0])), np.random.uniform(-1, 1, (1, nonbhl[0]))))
-        #create hidden layer
-        if nohl > 1:
-            for i in range(nohl - 1):
-                i += 1
-                ANN.append((np.random.uniform(-1, 1, (nonbhl[i-1], nonbhl[i])), np.random.uniform(-1, 1, (1, nonbhl[i]))))
-        #create output layer
-        ANN.append((np.random.uniform(-1, 1, (nonbhl[nohl-1], noo)), np.random.uniform(-1, 1, (1, noo))))
-        self.ANN = ANN
+        nablaW = [np.zeros(w.shape) for w in self.weights]
+        nablaB = [np.zeros(b.shape) for b in self.biases]
+        for x, y in batch:
+            deltaW, deltaB = self.backProp(x, y)
+            nablaW = [nw+dnw for nw, dnw in zip(nablaW, deltaW)]
+            nablaB = [nb+dnb for nb, dnb in zip(nablaB, deltaB)]
+        self.weights = [w-(eta/len(batch))*nw for w, nw in zip(self.weights, nablaW)]
+        self.biases = [b-(eta/len(batch))*nb for b, nb in zip(self.biases, nablaB)]
 
-    def sigmoidActivation(self, a):
+    def backProp(self, x, y):
+        '''
+        Computes the gradient descent
+
+        Input: x - input
+               y - desired output
+
+        Output: 
+
+        '''
+        a = 1
+
+    def sigmoid(self, a):
         '''
         Input:
             a - numpy array
@@ -65,6 +90,17 @@ class MLP:
 
         '''
         return 1/(1 + np.exp(-a))
+
+    def sigmoidPrime(self, a):
+        '''
+        Input:
+            a - numpy array
+
+        Output:
+            return the value of a throught the derivative of the sigmoid function
+
+        '''
+        return self.sigmoid(a)*(1-self.sigmoid(a))
 
     def hyperbolicTanActivation(self, a):
         '''
@@ -77,21 +113,4 @@ class MLP:
         '''
         return np.tanh(a)
 
-    def update(self, inputData):
-        '''
-        Input:
-            inputData - numpy array - shape must be (1, numberOfInput) or (numberOfInput,)
-        Output:
-            outputData - numpy array, (1, numberOfOutputs)
 
-        '''
-        assert (np.asarray(inputData).size == self.noi), "The dimension of the inputData array is not correct!"
-        for layer in self.ANN:
-            #Compute input time weights
-            res = np.dot(inputData, layer[0])
-            #add in the bias
-            resBias = res + layer[1]
-            #Computes the output
-            acti = self.listOfActivationFunctions[self.activationFunctionChoosed](resBias)
-            inputData = acti
-        return inputData
