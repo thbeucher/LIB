@@ -12,6 +12,38 @@
 import numpy as np
 
 
+def sigmoid(a):
+    '''
+    Input:
+        a - numpy array
+
+    Output:
+        return the value of a throught the sigmoid function
+
+    '''
+    return 1/(1 + np.exp(-a))
+
+def sigmoidPrime(a):
+    '''
+    Input:
+        a - numpy array
+
+    Output:
+        return the value of a throught the derivative of the sigmoid function
+
+    '''
+    return self.sigmoid(a)*(1-self.sigmoid(a))
+
+def hyperbolicTan(a):
+    '''
+    Input:
+        a - numpy array
+
+    Output:
+        return the value of a throught the tanh function
+
+    '''
+    return np.tanh(a)
 
 class MLP:
     '''
@@ -19,7 +51,7 @@ class MLP:
 
     '''
 
-    def __init__(self, networkStruct):
+    def __init__(self, networkStruct, ):
         '''
         Inits the neural network
 
@@ -28,14 +60,25 @@ class MLP:
         '''
         self.nbLayer = len(networkStruct)
         self.networkStruct = networkStruct
-        self.basicInit()
+        self.specialInit()
 
     def basicInit(self):
         '''
-        Random initializes of biaises and weights using gaussian distribution with mean 0 and standard deviation 1
+        Random initializes of biaises and weights using gaussian distribution with mean 0
+        and standard deviation 1
 
         '''    
         self.weights = [np.random.randn(nbNeu, nbIn) for nbNeu, nbIn in zip(self.networkStruct[1:], self.networkStruct[:-1])]
+        self.biases = [np.random.randn(nbNeu,1) for nbNeu in self.networkStruct[1:]]
+
+    def specialInit(self):
+        '''
+        Random initializes of biaises and weights using gaussian distribution with mean 0
+        and standard deviation 1 over the square root of the number of weights connecting
+        to the same neuron
+
+        '''
+        self.weights = [np.random.randn(nbNeu, nbIn)/np.sqrt(nbIn) for nbNeu, nbIn in zip(self.networkStruct[1:], self.networkStruct[:-1])]
         self.biases = [np.random.randn(nbNeu,1) for nbNeu in self.networkStruct[1:]]
 
     def feedForward(self, a):
@@ -48,7 +91,7 @@ class MLP:
 
         '''
         for w, b in zip(self.weights, self.biases):
-            a = self.sigmoid(np.dot(w, a) + b)
+            a = sigmoid(np.dot(w, a) + b)
         return a
 
     def update(self, batch, eta):
@@ -87,52 +130,19 @@ class MLP:
         for w, b in zip(self.weights, self.biases):
             z = np.dot(w, activation) + b
             zs.append(z)
-            activation = self.sigmoid(z)
+            activation = sigmoid(z)
             activations.append(activation)
         #output error
-        delta = (activations[-1] - y)*self.sigmoidPrime(zs[-1])
+        delta = (activations[-1] - y)*sigmoidPrime(zs[-1])
         deltaW[-1] = np.dot(delta, activation[-2].T)
         deltaB[-1] = delta
         #backpropagate the error
         for l in xrange(2, self.nbLayer):
             z = zs[-1]
-            sp = self.sigmoidPrime(z)
+            sp = sigmoidPrime(z)
             delta = np.dot(self.weights[-l+1].T, delta)*sp
             deltaW[-l] = np.dot(delta, activations[-l-1].T)
             deltaB[-l] = delta
         return deltaW, deltaB
-
-    def sigmoid(self, a):
-        '''
-        Input:
-            a - numpy array
-
-        Output:
-            return the value of a throught the sigmoid function
-
-        '''
-        return 1/(1 + np.exp(-a))
-
-    def sigmoidPrime(self, a):
-        '''
-        Input:
-            a - numpy array
-
-        Output:
-            return the value of a throught the derivative of the sigmoid function
-
-        '''
-        return self.sigmoid(a)*(1-self.sigmoid(a))
-
-    def hyperbolicTan(self, a):
-        '''
-        Input:
-            a - numpy array
-
-        Output:
-            return the value of a throught the tanh function
-
-        '''
-        return np.tanh(a)
 
 
