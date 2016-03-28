@@ -78,7 +78,29 @@ class MLP:
         Output: 
 
         '''
-        a = 1
+        deltaW = [np.zeros(w.shape) for w in self.weigths]
+        deltaB = [np.zeros(b.shape) for b in self.biases]
+        #feedForward
+        activation = x
+        activations = [x]
+        zs = []
+        for w, b in zip(self.weights, self.biases):
+            z = np.dot(w, activation) + b
+            zs.append(z)
+            activation = self.sigmoid(z)
+            activations.append(activation)
+        #output error
+        delta = (activations[-1] - y)*self.sigmoidPrime(zs[-1])
+        deltaW[-1] = np.dot(delta, activation[-2].T)
+        deltaB[-1] = delta
+        #backpropagate the error
+        for l in xrange(2, self.nbLayer):
+            z = zs[-1]
+            sp = self.sigmoidPrime(z)
+            delta = np.dot(self.weights[-l+1].T, delta)*sp
+            deltaW[-l] = np.dot(delta, activations[-l-1].T)
+            deltaB[-l] = delta
+        return deltaW, deltaB
 
     def sigmoid(self, a):
         '''
@@ -102,7 +124,7 @@ class MLP:
         '''
         return self.sigmoid(a)*(1-self.sigmoid(a))
 
-    def hyperbolicTanActivation(self, a):
+    def hyperbolicTan(self, a):
         '''
         Input:
             a - numpy array
