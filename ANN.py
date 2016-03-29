@@ -10,6 +10,7 @@
 #-------------------------------------------------------------------------------
 
 import numpy as np
+import json
 
 
 def sigmoid(a):
@@ -45,21 +46,83 @@ def hyperbolicTan(a):
     '''
     return np.tanh(a)
 
+class QuadraticCost():
+
+    @staticmethod
+    def fn(a, y):
+        '''
+        Return the cost
+
+        Input:
+            a - output
+            y -  desired output
+
+        Output:
+
+        '''
+        return 0.5*np.linalg.norm(a-y)**2
+
+    @staticmethod
+    def delta(z, a, y):
+        '''
+        Return the error delta from the output layer
+
+        Input:
+            a - output
+            y -  desired output
+            z - wa + b
+
+        Output:
+
+        '''
+        return (a-y) * sigmoid_prime(z)
+
+class CrossEntropyCost():
+
+    @staticmethod
+    def fn(a, y):
+        '''
+        Return the cost - np.nan_to_num ensure numerical stability
+
+        Input:
+            a - output
+            y -  desired output
+
+        Output:
+
+        '''
+        return np.sum(np.nan_to_num(-y*np.log(a)-(1-y)*np.log(1-a)))
+
+    @staticmethod
+    def delta(z, a, y):
+        '''
+        Return the error delta from the output layer
+
+        Input:
+            a - output
+            y -  desired output
+
+        Output:
+
+        '''
+        return (a-y)
+
 class MLP:
     '''
     Implements a multilayer perceptron
 
     '''
 
-    def __init__(self, networkStruct, ):
+    def __init__(self, networkStruct, cost = CrossEntropyCost):
         '''
         Inits the neural network
 
         Input: networkStructure - python list - give the number of neuron for each layers
-        
+
         '''
         self.nbLayer = len(networkStruct)
         self.networkStruct = networkStruct
+        self.cost = cost
         self.specialInit()
 
     def basicInit(self):
@@ -67,7 +130,7 @@ class MLP:
         Random initializes of biaises and weights using gaussian distribution with mean 0
         and standard deviation 1
 
-        '''    
+        '''
         self.weights = [np.random.randn(nbNeu, nbIn) for nbNeu, nbIn in zip(self.networkStruct[1:], self.networkStruct[:-1])]
         self.biases = [np.random.randn(nbNeu,1) for nbNeu in self.networkStruct[1:]]
 
@@ -100,7 +163,7 @@ class MLP:
 
         Input: batch - python list - list of tuples (x,y) where x in the input and y the desired output
                eta - float - learning rate
-  
+
         '''
         nablaW = [np.zeros(w.shape) for w in self.weights]
         nablaB = [np.zeros(b.shape) for b in self.biases]
@@ -118,7 +181,7 @@ class MLP:
         Input: x - input
                y - desired output
 
-        Output: 
+        Output:
 
         '''
         deltaW = [np.zeros(w.shape) for w in self.weigths]
@@ -133,7 +196,7 @@ class MLP:
             activation = sigmoid(z)
             activations.append(activation)
         #output error
-        delta = (activations[-1] - y)*sigmoidPrime(zs[-1])
+        delta = self.cost.delta(zs[-1], activations[-1], y)
         deltaW[-1] = np.dot(delta, activation[-2].T)
         deltaB[-1] = delta
         #backpropagate the error
@@ -144,5 +207,18 @@ class MLP:
             deltaW[-l] = np.dot(delta, activations[-l-1].T)
             deltaB[-l] = delta
         return deltaW, deltaB
+
+    def save(self, fileName):
+        '''
+        Save the neural network to the file fileName
+
+        '''
+        data = {"sizes": self.sizes,
+                "weights": [w.tolist() for w in self.weights],
+                "biases": [b.tolist() for b in self.biases],
+                "cost": str(self.cost.__name__)}
+        f = open(filename, "w")
+        json.dump(data, f)
+        f.close()
 
 
