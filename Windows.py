@@ -113,13 +113,13 @@ class Window:
         '''
         Associates the direction keys to the events corresponding
 
-        Inputs: -moveUpEvent: the function for the move up event
-                -moveDownEvent: the function for the move down event
-                -moveLeftEvent: the function for the move left event
-                -moveRightEvent: the function for the move rigth event
+        Inputs: -moveUpEvent: the function for the move up event, set 0 if none
+                -moveDownEvent: the function for the move down event, set 0 if none
+                -moveLeftEvent: the function for the move left event, set 0 if none
+                -moveRightEvent: the function for the move rigth event, set 0 if none
 
         '''
-        self.fen.bind("<Up>", self.moveUpEvent)
-        self.fen.bind("<Down>", self.moveDownEvent)
-        self.fen.bind("<Left>", self.moveLeftEvent)
-        self.fen.bind("<Right>", self.moveRightEvent)
+        self.win.bind("<Up>", moveUpEvent)
+        self.win.bind("<Down>", moveDownEvent)
+        self.win.bind("<Left>", moveLeftEvent)
+        self.win.bind("<Right>", moveRightEvent)
