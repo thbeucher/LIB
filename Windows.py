@@ -108,3 +108,18 @@ class Window:
         coord = self.checkOut(obj)
         newCenter = [(coord[2]+coord[0])/2, (coord[3]+coord[1])/2]
         return coord, newCenter
+
+    def event(self, moveUpEvent, moveDownEvent, moveLeftEvent, moveRightEvent):
+        '''
+        Associates the direction keys to the events corresponding
+
+        Inputs: -moveUpEvent: the function for the move up event
+                -moveDownEvent: the function for the move down event
+                -moveLeftEvent: the function for the move left event
+                -moveRightEvent: the function for the move rigth event
+
+        '''
+        self.fen.bind("<Up>", self.moveUpEvent)
+        self.fen.bind("<Down>", self.moveDownEvent)
+        self.fen.bind("<Left>", self.moveLeftEvent)
+        self.fen.bind("<Right>", self.moveRightEvent)
