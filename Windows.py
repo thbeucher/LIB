@@ -88,7 +88,7 @@ class Window:
 
     def moveWithCoord(self, obj, newCoords):
         '''
-        Moves an object at the given coordinates
+        Moves a circle object at the given coordinates
 
         Input:
             obj - int - object to move
