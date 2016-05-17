@@ -12,6 +12,7 @@
 import shutil
 import numpy as np
 import json
+from PIL import ImageGrab
 
 def zipData(zipFileName, pathToZip):
     '''
@@ -96,3 +97,43 @@ def loadNetwork(fileName, networkObj):
     net.weights = [np.array(w) for w in data["weights"]]
     net.biases = [np.array(b) for b in data["biases"]]
     return net
+
+def getImage(canv, ret = "np", conv = "grayscale"):
+    '''
+    Takes a screenshot of the canvas screen, convert to grayscale
+    and convert in numpy array
+
+    Import needed: -from PIL import ImageGrab
+                   -import numpy as np
+
+    Input: canv - tkinter canvas object
+           ret - 'np' or 'all' to get in return:
+               np: default value - only numpy array - pix
+               all: numpy array, rgb and grayscale image - pix, snapshot and snapToGray
+           conv - 'rgb' or 'grayscale' - choose image format
+               grayscale: default value
+ 
+    Ouput: pix - store image pixels in a numpy array
+           snapshot - rgb pil image
+           snapeToGray - grayscale image
+
+    '''
+    #get the coordinate of canvas in the windows screen
+    x1, y1 = canv.winfo_rootx(), canv.winfo_rooty()
+    #get height and width of the canvas
+    h, w = canv.winfo_height(), canv.winfo_width()
+    coordSnap = (x1, y1, x1+h, y1+w)
+    #take a screenshot ie rgb image
+    snapshot = ImageGrab.grab(coordSnap)
+    if conv == "rgb":
+        #convert image to array
+        pix = np.array(snapshot)
+    else:
+        #convert rgb to grayscale
+        snapToGray = snapshot.convert('L')
+        #convert image to array
+        pix = np.array(snapToGray)
+    if ret == "all":
+        return pix, snapshot, snapToGray
+    else:
+        return pix
