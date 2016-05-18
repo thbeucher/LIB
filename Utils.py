@@ -98,7 +98,7 @@ def loadNetwork(fileName, networkObj):
     net.biases = [np.array(b) for b in data["biases"]]
     return net
 
-#look at getwindowdc getpixel to maybe improve speed at screenshot
+#look at getwindowdc getpixel to maybe speed up screenshot
 def getImage(canv, ret = "np", conv = "grayscale"):
     '''
     Takes a screenshot of the canvas screen, convert to grayscale
