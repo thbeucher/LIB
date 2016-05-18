@@ -133,7 +133,7 @@ def getImage(canv, ret = "np", conv = "grayscale"):
         snapToGray = snapshot.convert('L')
         #convert image to array
         pix = np.array(snapToGray)
-    if ret == "all":
-        return pix, snapshot, snapToGray
-    else:
+        if ret == "all":
+            return pix, snapshot, snapToGray
+    if ret == "np":
         return pix
