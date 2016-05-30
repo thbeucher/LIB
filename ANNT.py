@@ -98,3 +98,44 @@ class SoftmaxLayer(object):
         "Return the log-likelihood cost."
         return -T.mean(T.log(self.output_dropout)[T.arange(net.y.shape[0]), net.y])
 
+
+class ConvolutionalLayer():
+
+    def __init__(self, filter_shape, image_shape, activation_fn=sigmoid):
+        '''
+        filter_shape - is a tuple of length 4, whose entries are the number
+        of filters, the number of input feature maps, the filter height, and the
+        filter width.
+        image_shape - is a tuple of length 4, whose entries are the
+        mini-batch size, the number of input feature maps, the image
+        height, and the image width.
+        
+        '''
+        self.filter_shape = filter_shape
+        self.image_shape = image_shape
+        self.activation_fn = activation_fn
+        n_out = filter_shape[0]*np.prod(filter_shape[2:])
+        self.w = theano.shared(
+            np.asarray(
+                np.random.normal(loc=0, scale=np.sqrt(1.0/n_out), size=filter_shape),
+                dtype=theano.config.floatX),
+            borrow=True)
+        self.b = theano.shared(
+            np.asarray(
+                np.random.normal(loc=0, scale=1.0, size=(filter_shape[0],)),
+                dtype=theano.config.floatX),
+            borrow=True)
+        self.params = [self.w, self.b]
+
+    def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
+        self.inpt = inpt.reshape(self.image_shape)
+        conv_out = conv.conv2d(input=self.inpt, filters=self.w,
+                               filter_shape=self.filter_shape,
+                               image_shape=self.image_shape)
+        self.output = self.activation_fn(conv_out + self.b.dimshuffle('x', 0, 'x', 'x'))
+        #no dropout in the convolutional layers
+        self.output_dropout = self.output
+
+
+
+
