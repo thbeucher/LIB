@@ -208,8 +208,31 @@ class Network():
             layer.set_inpt(prev_layer.output, prev_layer.output_dropout, self.mini_batch_size)
         self.output = self.layers[-1].output
         self.output_dropout = self.layers[-1].output_dropout
+        #for DQN
+        #initialize replay memory D
+        #initialize action-value function Q with random weights
+        #observe initial state s
 
+    def DQN(self):
+        '''
     
+        '''
+        #repeat
+            #select an action a
+                #with probability eps select a random action
+                #otherwise select a = argmax-a'-Q(s,a')
+            #carry out action a
+            #observe reward r and new state s'
+            #store experience <s,a,r,s'> in replay memory D
+
+            #sample random transitions <ss,aa,rr,ss'> from replay memory D
+            #calculate target for each minibatch transition
+                #if ss' is terminal state then tt = rr
+                #otherwise tt == rr + gamma*max-a'-Q(ss', aa')
+            #train the Q network using (tt - Q(ss,aa))^2 as loss
+
+            #s = s'
+        #until terminated
 
 
 
