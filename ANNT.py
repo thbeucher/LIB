@@ -10,6 +10,7 @@
 #-------------------------------------------------------------------------------
 
 import numpy as np
+import lasagne
 import theano
 import theano.tensor as T
 from theano.tensor import shared_randomstreams
@@ -40,8 +41,53 @@ def dropout_layer(layer, p_dropout):
     #we work with float32 but int*float32 = float64 so we have to cast the result
     return layer*T.cast(mask, theano.config.floatX)
 
+def input_layer(shape):
+    '''
+    shape: (None, num_frames, input_width, input_height)
+    
+    '''
+    return lasagne.layers.InputLayer(shape=shape)
+
 
 class FullyConnectedLayer(object):
+
+    def __init__(self, obj, choice="theano"):
+        '''
+        obj - python list:
+                if theano:
+                    -n_in: 
+                    -n_out:  
+                    -activation_fn: activation function
+                    -p_dropout:
+                if denselayer:
+                    -layer_in: previous layer
+                    -nb_units: x - number of neuron
+                    -nonlinearity: see lasagne.nonlinearities, default to rectify
+                    -init_w: see lasagne.init, nature=HeUniform()
+                    -init_b: see lasagne.init, nature=Constant(.1)
+        choice - type of initialization:
+                -theano: classic implementation with theano
+                -denselayer: use of lasagne.layers.DenseLayer
+
+        '''
+        if choice == "theano":
+            self.n_in, self.n_out, self.activation_fn, self.p_dropout = obj
+            # Initialize weights and biases
+            self.w = theano.shared(
+                np.asarray(
+                    np.random.normal(
+                        loc=0.0, scale=np.sqrt(1.0/n_out), size=(n_in, n_out)),
+                    dtype=theano.config.floatX),
+                name='w', borrow=True)
+            self.b = theano.shared(
+                np.asarray(np.random.normal(loc=0.0, scale=1.0, size=(n_out,)),
+                           dtype=theano.config.floatX),
+                name='b', borrow=True)
+            self.params = [self.w, self.b]
+        elif choice == "denselayer":
+            l_in, nb_units, nonlinearity, w, b = obj
+            return lasagne.layers.DenseLayer(l_in, num_units=nb_units,
+                                              nonlinearity=nonlinearity, w=w, b=b)
 
     def __init__(self, n_in, n_out, activation_fn=sigmoid, p_dropout=0.0):
         self.n_in = n_in
@@ -106,7 +152,6 @@ class ConvPoolLayer(object):
     simplifies the code, so it makes sense to combine them.
     
     '''
-
     def __init__(self, filter_shape, image_shape, poolsize=(2, 2), activation_fn=sigmoid):
         '''
         `filter_shape` is a tuple of length 4, whose entries are the number
@@ -150,31 +195,58 @@ class ConvPoolLayer(object):
 
 class ConvolutionalLayer():
 
-    def __init__(self, filter_shape, image_shape, activation_fn=sigmoid):
+    def __init__(self, obj, choice="theano"):
         '''
-        filter_shape - is a tuple of length 4, whose entries are the number
-        of filters, the number of input feature maps, the filter height, and the
-        filter width.
-        image_shape - is a tuple of length 4, whose entries are the
-        mini-batch size, the number of input feature maps, the image
-        height, and the image width.
-        
+        obj - python list:
+                if theano:
+                    -filter_shape: (nb of filters, nb of input feature maps, filter height, filter width)
+                    -image_shape: (mini-batch size, nb of input feature maps, image heigth, image width)
+                    -activation_fn: activation function, default to sigmoid
+                if cuda or pylearn:
+                    -layer_in: previous layer
+                    -nb_filters: x - number of filters 
+                    -filter_size: (y, x) - size of the filter
+                    -stride: (y, x)
+                    -nonlinearity: see lasagne.nonlinearities, default to rectify
+                    -init_w: see lasagne.init, nature=HeUniform()
+                    -init_b: see lasagne.init, nature=Constant(.1)
+                    -dimshuffle: True or False
+        choice - type of initialization:
+                -theano: classic implementation with theano
+                -cuda: use of lasagne.layers.cuda_convnet
+                -pylearn: use of lasagne.layers.dnn
+
         '''
-        self.filter_shape = filter_shape
-        self.image_shape = image_shape
-        self.activation_fn = activation_fn
-        n_out = filter_shape[0]*np.prod(filter_shape[2:])
-        self.w = theano.shared(
-            np.asarray(
-                np.random.normal(loc=0, scale=np.sqrt(1.0/n_out), size=filter_shape),
-                dtype=theano.config.floatX),
-            borrow=True)
-        self.b = theano.shared(
-            np.asarray(
-                np.random.normal(loc=0, scale=1.0, size=(filter_shape[0],)),
-                dtype=theano.config.floatX),
-            borrow=True)
-        self.params = [self.w, self.b]
+        if choice == "theano":
+            self.filter_shape, self.image_shape, self.activation_fn = obj
+            n_out = filter_shape[0]*np.prod(filter_shape[2:])
+            self.w = theano.shared(
+                np.asarray(
+                    np.random.normal(loc=0, scale=np.sqrt(1.0/n_out), size=filter_shape),
+                    dtype=theano.config.floatX),
+                borrow=True)
+            self.b = theano.shared(
+                np.asarray(
+                    np.random.normal(loc=0, scale=1.0, size=(filter_shape[0],)),
+                    dtype=theano.config.floatX),
+                borrow=True)
+            self.params = [self.w, self.b]
+        elif choice == "cuda":
+            l_in, num_filters, filter_size, stride, nonlinearity, w, b, dimshuffle = obj
+            from lasagne.layers import cuda_convnet
+            return cuda_convnet.Conv2DCCLayer(l_in,
+                                              num_filters=num_filters,
+                                              filter_size=filter_size,
+                                              stride=stride,
+                                              nonlinearity=nonlinearity
+                                              w=w, b=b, dimshuffle=dimshuffle)
+        elif choice == "pylearn2":
+            l_in, num_filters, filter_size, stride, nonlinearity, w, b = obj
+            from lasagne.layers import dnn
+            return dnn.Conv2DDNNLayer(l_in, num_filters=num_filters,
+                                      filter_size=filter_size, stride=stride,
+                                      nonlinearity=nonlinearity,
+                                      w=w, b=b)
 
     def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
         self.inpt = inpt.reshape(self.image_shape)
