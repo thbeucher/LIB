@@ -86,7 +86,7 @@ class FullyConnectedLayer(object):
             self.params = [self.w, self.b]
         elif choice == "denselayer":
             l_in, nb_units, nonlinearity, w, b = obj
-            return lasagne.layers.DenseLayer(l_in, num_units=nb_units,
+            self.layer = lasagne.layers.DenseLayer(l_in, num_units=nb_units,
                                               nonlinearity=nonlinearity, w=w, b=b)
 
     def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
@@ -184,7 +184,7 @@ class ConvolutionalLayer():
                     -filter_shape: (nb of filters, nb of input feature maps, filter height, filter width)
                     -image_shape: (mini-batch size, nb of input feature maps, image heigth, image width)
                     -activation_fn: activation function, default to sigmoid
-                if cuda or pylearn:
+                if cuda or dnn:
                     -layer_in: previous layer
                     -nb_filters: x - number of filters 
                     -filter_size: (y, x) - size of the filter
@@ -216,16 +216,16 @@ class ConvolutionalLayer():
         elif choice == "cuda":
             l_in, num_filters, filter_size, stride, nonlinearity, w, b, dimshuffle = obj
             from lasagne.layers import cuda_convnet
-            return cuda_convnet.Conv2DCCLayer(l_in,
+            self.layer = cuda_convnet.Conv2DCCLayer(l_in,
                                               num_filters=num_filters,
                                               filter_size=filter_size,
                                               stride=stride,
-                                              nonlinearity=nonlinearity
+                                              nonlinearity=nonlinearity,
                                               w=w, b=b, dimshuffle=dimshuffle)
-        elif choice == "pylearn2":
+        elif choice == "dnn":
             l_in, num_filters, filter_size, stride, nonlinearity, w, b = obj
             from lasagne.layers import dnn
-            return dnn.Conv2DDNNLayer(l_in, num_filters=num_filters,
+            self.layer = dnn.Conv2DDNNLayer(l_in, num_filters=num_filters,
                                       filter_size=filter_size, stride=stride,
                                       nonlinearity=nonlinearity,
                                       w=w, b=b)
@@ -251,6 +251,9 @@ class Network():
                 -mini_batch_size
             if choice == lasagne:
 
+        choice - type of initialization:
+            theano or lasagne
+
         '''
         if choice == "theano":
             self.layers, self.mini_batch_size = obj
@@ -270,6 +273,76 @@ class Network():
         #initialize replay memory D
         #initialize action-value function Q with random weights
         #observe initial state s
+
+    def Build_DQN(self, obj):
+        '''
+        obj - python list:
+                -network_type: nature_cuda or nature_dnn
+                -input_width
+                -input_height
+                -nb_actions
+                -nb_frames
+                -batch_size
+
+        '''
+        network_type, input_width, input_height,\
+                      nb_actions, nb_frames, batch_size = obj
+        l_in = input_layer((None, nb_frames, input_width, input_height))
+        if network_type == "nature_cuda":
+            l_conv1 = ConvolutionalLayer([l_in, 32, (8, 8),
+                                          (4, 4),
+                                          lasagne.nonlinearities.rectify,
+                                          lasagne.init.HeUniform(),
+                                          lasagne.init.Constant(.1),
+                                          True], choice="cuda").layer
+            l_conv2 = ConvolutionalLayer([l_conv1, 64, (4, 4),
+                                          (2, 2),
+                                          lasagne.nonlinearities.rectify,
+                                          lasagne.init.HeUniform(),
+                                          lasagne.init.Constant(.1),
+                                          True], choice="cuda").layer
+            l_conv3 = ConvolutionalLayer([l_conv2, 64, (3, 3),
+                                          (1, 1),
+                                          lasagne.nonlinearities.rectify,
+                                          lasagne.init.HeUniform(),
+                                          lasagne.init.Constant(.1),
+                                          True], choice="cuda").layer
+            l_hidden1 = FullyConnectedLayer([l_conv3, 512,
+                                             lasagne.nonlinearities.rectify,
+                                             lasagne.init.HeUniform(),
+                                             lasagne.init.Constant(.1)], choice="denselayer").layer
+            l_out = FullyConnectedLayer([l_hidden1, nb_actions,
+                                             None,
+                                             lasagne.init.HeUniform(),
+                                             lasagne.init.Constant(.1)], choice="denselayer").layer
+        elif network_type == "nature_dnn":
+            l_conv1 = ConvolutionalLayer([l_in, 32, (8, 8),
+                                          (4, 4),
+                                          lasagne.nonlinearities.rectify,
+                                          lasagne.init.HeUniform(),
+                                          lasagne.init.Constant(.1),
+                                          True], choice="dnn").layer
+            l_conv2 = ConvolutionalLayer([l_conv1, 64, (4, 4),
+                                          (2, 2),
+                                          lasagne.nonlinearities.rectify,
+                                          lasagne.init.HeUniform(),
+                                          lasagne.init.Constant(.1),
+                                          True], choice="dnn").layer
+            l_conv3 = ConvolutionalLayer([l_conv2, 64, (3, 3),
+                                          (1, 1),
+                                          lasagne.nonlinearities.rectify,
+                                          lasagne.init.HeUniform(),
+                                          lasagne.init.Constant(.1),
+                                          True], choice="dnn").layer
+            l_hidden1 = FullyConnectedLayer([l_conv3, 512,
+                                             lasagne.nonlinearities.rectify,
+                                             lasagne.init.HeUniform(),
+                                             lasagne.init.Constant(.1)], choice="denselayer").layer
+            l_out = FullyConnectedLayer([l_hidden1, nb_actions,
+                                             None,
+                                             lasagne.init.HeUniform(),
+                                             lasagne.init.Constant(.1)], choice="denselayer").layer
+        return l_out
 
     def DQN(self):
         '''
