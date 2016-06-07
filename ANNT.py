@@ -58,7 +58,7 @@ class FullyConnectedLayer(object):
                     -n_in: 
                     -n_out:  
                     -activation_fn: activation function
-                    -p_dropout:
+                    -p_dropout: 
                 if denselayer:
                     -layer_in: previous layer
                     -nb_units: x - number of neuron
@@ -88,24 +88,6 @@ class FullyConnectedLayer(object):
             l_in, nb_units, nonlinearity, w, b = obj
             return lasagne.layers.DenseLayer(l_in, num_units=nb_units,
                                               nonlinearity=nonlinearity, w=w, b=b)
-
-    def __init__(self, n_in, n_out, activation_fn=sigmoid, p_dropout=0.0):
-        self.n_in = n_in
-        self.n_out = n_out
-        self.activation_fn = activation_fn
-        self.p_dropout = p_dropout
-        # Initialize weights and biases
-        self.w = theano.shared(
-            np.asarray(
-                np.random.normal(
-                    loc=0.0, scale=np.sqrt(1.0/n_out), size=(n_in, n_out)),
-                dtype=theano.config.floatX),
-            name='w', borrow=True)
-        self.b = theano.shared(
-            np.asarray(np.random.normal(loc=0.0, scale=1.0, size=(n_out,)),
-                       dtype=theano.config.floatX),
-            name='b', borrow=True)
-        self.params = [self.w, self.b]
 
     def set_inpt(self, inpt, inpt_dropout, mini_batch_size):
         self.inpt = inpt.reshape((mini_batch_size, self.n_in))
@@ -261,25 +243,29 @@ class ConvolutionalLayer():
 
 class Network():
 
-    def __init__(self, layers, mini_batch_size):
+    def __init__(self, obj, choice="theano"):
         '''
-        Takes a list of `layers`, describing the network architecture, and
-        a value for the `mini_batch_size` to be used during training
-        by stochastic gradient descent.
-        
+        obj - python list:
+            if choice = theano:
+                -layers: python list containing the network architecture
+                -mini_batch_size
+            if choice == lasagne:
+
         '''
-        self.layers = layers
-        self.mini_batch_size = mini_batch_size
-        self.params = [param for layer in self.layers for param in layer.params]
-        self.x = T.matrix("x")
-        self.y = T.ivector("y")
-        init_layer = self.layers[0]
-        init_layer.set_inpt(self.x, self.x, self.mini_batch_size)
-        for j in xrange(1, len(self.layers)):
-            prev_layer, layer  = self.layers[j-1], self.layers[j]
-            layer.set_inpt(prev_layer.output, prev_layer.output_dropout, self.mini_batch_size)
-        self.output = self.layers[-1].output
-        self.output_dropout = self.layers[-1].output_dropout
+        if choice == "theano":
+            self.layers, self.mini_batch_size = obj
+            self.params = [param for layer in self.layers for param in layer.params]
+            self.x = T.matrix("x")
+            self.y = T.ivector("y")
+            init_layer = self.layers[0]
+            init_layer.set_inpt(self.x, self.x, self.mini_batch_size)
+            for j in xrange(1, len(self.layers)):
+                prev_layer, layer  = self.layers[j-1], self.layers[j]
+                layer.set_inpt(prev_layer.output, prev_layer.output_dropout, self.mini_batch_size)
+            self.output = self.layers[-1].output
+            self.output_dropout = self.layers[-1].output_dropout
+        elif choice == "lasagne":
+            a=1
         #for DQN
         #initialize replay memory D
         #initialize action-value function Q with random weights
