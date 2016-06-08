@@ -274,7 +274,7 @@ class Network():
         #initialize action-value function Q with random weights
         #observe initial state s
 
-    def Build_DQN(self, obj):
+    def build_DQN(self, obj):
         '''
         obj - python list:
                 -network_type: nature_cuda or nature_dnn
@@ -342,7 +342,7 @@ class Network():
                                              None,
                                              lasagne.init.HeUniform(),
                                              lasagne.init.Constant(.1)], choice="denselayer").layer
-        return l_out
+        self.l-out = l_out
 
     def DQN(self):
         '''
