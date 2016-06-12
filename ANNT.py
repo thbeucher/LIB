@@ -377,7 +377,7 @@ class Network():
                                              None,
                                              lasagne.init.HeUniform(),
                                              lasagne.init.Constant(.1)], choice="denselayer").layer
-        self.l-out = l_out
+        self.l_out = l_out
 
     def DQN(self):
         '''
