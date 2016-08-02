@@ -1,0 +1,13 @@
+myFile.py
+
+setup.py:
+	from distutils.core import setup
+	import py2exe
+
+	setup(console=['hello.py'])
+
+run: python setup.py py2exe
+
+
+http://www.py2exe.org/index.cgi/Tutorial
+
