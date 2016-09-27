@@ -305,7 +305,7 @@ class Network():
             #s = s'
         #until terminated
 
-class DQNNetwork:
+class DQLearner:
     '''
     DQN network, consistent with deepmind nature paper, using Lasagne
     '''
