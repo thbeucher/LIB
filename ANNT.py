@@ -32,7 +32,7 @@ def dropout_layer(layer, p_dropout):
            -p_dropout - % of dropout neuron
 
     output: -the dropout layer
-    
+
     '''
     #equivalent of randomState for theano
     srng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(999999))
@@ -44,7 +44,7 @@ def dropout_layer(layer, p_dropout):
 def input_layer(shape):
     '''
     shape: (None, num_frames, input_width, input_height)
-    
+
     '''
     return lasagne.layers.InputLayer(shape=shape)
 
@@ -55,10 +55,10 @@ class FullyConnectedLayer(object):
         '''
         obj - python list:
                 if theano:
-                    -n_in: 
-                    -n_out:  
+                    -n_in:
+                    -n_out:
                     -activation_fn: activation function
-                    -p_dropout: 
+                    -p_dropout:
                 if denselayer:
                     -layer_in: previous layer
                     -nb_units: x - number of neuron
@@ -132,7 +132,7 @@ class ConvPoolLayer(object):
     layer.  A more sophisticated implementation would separate the
     two, but for our purposes we'll always use them together, and it
     simplifies the code, so it makes sense to combine them.
-    
+
     '''
     def __init__(self, filter_shape, image_shape, poolsize=(2, 2), activation_fn=sigmoid):
         '''
@@ -144,7 +144,7 @@ class ConvPoolLayer(object):
         height, and the image width.
         `poolsize` is a tuple of length 2, whose entries are the y and
         x pooling sizes.
-        
+
         '''
         self.filter_shape = filter_shape
         self.image_shape = image_shape
@@ -186,7 +186,7 @@ class ConvolutionalLayer():
                     -activation_fn: activation function, default to sigmoid
                 if cuda or dnn:
                     -layer_in: previous layer
-                    -nb_filters: x - number of filters 
+                    -nb_filters: x - number of filters
                     -filter_size: (y, x) - size of the filter
                     -stride: (y, x)
                     -nonlinearity: see lasagne.nonlinearities, default to rectify
@@ -221,6 +221,7 @@ class ConvolutionalLayer():
                                                     stride=stride,
                                                     w=w, b=b,
                                                     nonlinearity=nonlinearity)
+        #requires GPU
         elif choice == "cuda":
             l_in, num_filters, filter_size, stride, nonlinearity, w, b, dimshuffle = obj
             from lasagne.layers import cuda_convnet
@@ -230,6 +231,7 @@ class ConvolutionalLayer():
                                               stride=stride,
                                               nonlinearity=nonlinearity,
                                               w=w, b=b, dimshuffle=dimshuffle)
+        #requires GPU
         elif choice == "dnn":
             l_in, num_filters, filter_size, stride, nonlinearity, w, b = obj
             from lasagne.layers import dnn
@@ -282,8 +284,40 @@ class Network():
         #initialize action-value function Q with random weights
         #observe initial state s
 
+    def DQN(self):
+        '''
+
+        '''
+        #repeat
+            #select an action a
+                #with probability eps select a random action
+                #otherwise select a = argmax-a'-Q(s,a')
+            #carry out action a
+            #observe reward r and new state s'
+            #store experience <s,a,r,s'> in replay memory D
+
+            #sample random transitions <ss,aa,rr,ss'> from replay memory D
+            #calculate target for each minibatch transition
+                #if ss' is terminal state then tt = rr
+                #otherwise tt == rr + gamma*max-a'-Q(ss', aa')
+            #train the Q network using (tt - Q(ss,aa))^2 as loss
+
+            #s = s'
+        #until terminated
+
+class DQNNetwork:
+    '''
+    DQN network, consistent with deepmind nature paper, using Lasagne
+    '''
+
+    def __init__(self, input_width, input_height, network_type, nb_actions, nb_frames,\
+                 batch_size):
+        self.l_out = self.build_DQN([network_type, input_width, input_height, nb_actions,\
+                                     nb_frames, batch_size])
+
     def build_DQN(self, obj):
         '''
+        Creates the DQN network consistent with deepmind nature paper
         obj - python list:
                 -network_type: nature_cuda or nature_dnn or nature_lasagne_simple
                 -input_width
@@ -379,30 +413,7 @@ class Network():
                                              lasagne.init.Constant(.1)], choice="denselayer").layer
         self.l_out = l_out
 
-    def DQN(self):
-        '''
-    
-        '''
-        #repeat
-            #select an action a
-                #with probability eps select a random action
-                #otherwise select a = argmax-a'-Q(s,a')
-            #carry out action a
-            #observe reward r and new state s'
-            #store experience <s,a,r,s'> in replay memory D
-
-            #sample random transitions <ss,aa,rr,ss'> from replay memory D
-            #calculate target for each minibatch transition
-                #if ss' is terminal state then tt = rr
-                #otherwise tt == rr + gamma*max-a'-Q(ss', aa')
-            #train the Q network using (tt - Q(ss,aa))^2 as loss
-
-            #s = s'
-        #until terminated
 
 
 
 
-
-
-        

@@ -123,7 +123,7 @@ class rbfn():
         widthConstant = 2.2*rangeForEachDim / self.nbFeat
         #create the diagonal matrix of sigmas to compute the gaussian
         self.widths = np.diag(widthConstant)
-         #coef for Gaussian features
+        #coef for Gaussian features
         self.norma = 1/np.sqrt(((2*np.pi)**self.inputDimension)*np.linalg.det(self.widths))
         #print ("RBFN : constante de normalisation : ", self.norma)
         self.invcovar = np.linalg.pinv(self.widths)
