@@ -139,3 +139,74 @@ def gradient(a):
 
 #conditions
 #ifelse vs switch
+
+
+#loop
+#scan function
+#unchanging variables are passed to scan as non_sequences
+#initialization occurs in outputs_info
+
+#compute A**k elementwise
+def aPowerK(a, b):
+    k = T.iscalar('k')
+    A = T.vector('A')
+    #order of the parameters
+    #the output of the prior call to fn (or the initial value, initially) is
+    #the first parameter, followed by all non-sequences
+    result, updates = th.scan(fn=lambda prior_result, A: prior_result * A,\
+                                outputs_info=T.ones_like(A), non_sequences=A, n_steps=k)
+    #if we juste want the final result and let the intermediate values be discarded
+    final_result = result[-1]
+
+    power = th.function(inputs=[A,k], outputs=final_result, updates=updates)
+    print(power(a,b))
+
+#aPowerK(range(10), 2)
+
+#calculating a polynomial
+def calculPoly(a, b):
+    x = T.scalar('x')
+    coefs = T.vector('coefs')
+    max_coef_supported = 10000
+    #generate the components of the polynomial
+    #outputs_info to None indicates to scan that it doesn't need to pass the prior result to fn
+    #there is no accumulation of results
+    #use of theano.tensor.arange to simulate python's enumerate
+    components, updates = th.scan(fn=lambda coef, power, free_var: coef*(free_var**power),\
+                                    outputs_info=None, sequences=[coefs, T.arange(max_coef_supported)],\
+                                    non_sequences=x)
+    #sum them up
+    poly = components.sum()
+
+    calculate_poly = th.function(inputs=[coefs, x], outputs=poly)
+    print(calculate_poly(a, b))
+
+    #to improve memory usage we can accumulate coefficients along the way and then take the last one
+    def accu(coef, power, prior_val, free_var):
+        return prior_val + (coef*(free_var**power))
+    out = T.as_tensor_variable(np.asarray(0, coefs.dtype))
+    result, updates2 = th.scan(fn=accu, outputs_info=out,\
+                                 sequences=[coefs, T.arange(max_coef_supported)],\
+                                 non_sequences=x)
+    final_result = result[-1]
+    calculate_poly2 = th.function(inputs=[coefs, x], outputs=final_result, updates=updates2)
+    print(calculate_poly2(a,b))
+    #not sure but the order for variables are
+    #sequences, output, non_sequences
+
+#calculPoly([1,0,2], 3)
+
+#simple accumulation into a scalar, ditching lambda
+def ditchingLambda(a):
+    up_to = T.iscalar('up_to')
+    seq = T.arange(up_to)
+    def acc(val_arange, sum_actual_value):
+        return sum_actual_value + val_arange
+    out = T.as_tensor_variable(np.asarray(0, seq.dtype))
+    result, updates = th.scan(fn=acc, outputs_info=out, sequences=seq)
+    triangular_seq = th.function(inputs=[up_to], outputs=result)
+    print(triangular_seq(a))
+
+#ditchingLambda(15)
+
+
