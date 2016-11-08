@@ -113,7 +113,7 @@ def getImage(canv, ret = "np", conv = "grayscale"):
                all: numpy array, rgb and grayscale image - pix, snapshot and snapToGray
            conv - 'rgb' or 'grayscale' - choose image format
                grayscale: default value
- 
+
     Ouput: pix - store image pixels in a numpy array
            snapshot - rgb pil image
            snapeToGray - grayscale image
@@ -189,3 +189,10 @@ def cartesian(arrays, out=None):
         for j in range(1, arrays[0].size):
             out[j*m:(j+1)*m,1:] = out[0:m,1:]
     return out
+
+def list_to_dict(in_list):
+    return dict((i, in_list[i]) for i in range(0, len(in_list)))
+
+
+def exchange_key_value(in_dict):
+    return dict((in_dict[i], i) for i in in_dict)
