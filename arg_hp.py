@@ -32,8 +32,10 @@ class Args:
     all_vars: list of arguments passed
 
     '''
+    # get all arguments in a dictionary
     tmp = dict(a.split("=") for a in sys.argv[1:])
     self.all_vars = tmp.keys()
+    # check arguments
     self.check(tmp.keys())
     for k, v in tmp.items():
       if k in self.args.keys():
