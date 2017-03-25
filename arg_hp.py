@@ -1,5 +1,19 @@
 import sys
 
+'''
+Args allow to parse arguments from command line
+How to use it:
+1) Initialize Args class
+==> my_args = Args(var1=(var_type, true_or_false), var2=(...), ...)
+==> # true_or_false is a boolean used to inform if the argument is necessary or not
+2) Transform arguments from the command line into class attributes of Args
+==> my_args.resolve_args()
+3) Access to your variables
+==> my_args.var1
+==> my_args.var2
+
+'''
+
 class Args:
   def __init__(self, **args):
     '''
