@@ -56,8 +56,8 @@ class Args:
       if v[1]:
         assert k in received_args, "ERROR: argument <{}> is missing".format(k)
 
-a = Args(name=(str,True), count=(int,False, 0))
-a.resolve_args()
-print("name: {}".format(a.name))
-if hasattr(a, 'count'):
-  print("count: ", a.count)
+#a = Args(name=(str,True), count=(int,False, 0))
+#a.resolve_args()
+#print("name: {}".format(a.name))
+#if hasattr(a, 'count'):
+#  print("count: ", a.count)
