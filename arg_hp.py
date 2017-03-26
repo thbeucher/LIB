@@ -17,13 +17,17 @@ How to use it:
 class Args:
   def __init__(self, **args):
     '''
-    Must received variable_name=(value_type, boolean) couple
+    Must received variable_name=(value_type, boolean, [default_value]) couple
     where the boolean indicates if the argument is necesarry or optional (False)
+    default_value is optional argument
 
-    exemple: Args(name=(str, True), count=(int, False))
+    exemple: Args(name=(str, True), count=(int, False, 0))
 
     '''
     self.args = args
+    for k, v in args.items():
+        if len(v) == 3:
+            setattr(self, k, v[2])
 
   def resolve_args(self):
     '''
@@ -42,7 +46,7 @@ class Args:
         setattr(self, k, self.args[k][0](v))
       else:
         setattr(self, k, v)
-  
+
   def check(self, received_args):
     '''
     Checks if necessary variables are missing
@@ -52,8 +56,8 @@ class Args:
       if v[1]:
         assert k in received_args, "ERROR: argument <{}> is missing".format(k)
 
-#a = Args(name=(str,True), count=(int,False))
-#a.resolve_args()
-#print("name: {}".format(a.name))
-#if hasattr(a, 'count'):
-#  print("count: ", a.count)
+a = Args(name=(str,True), count=(int,False, 0))
+a.resolve_args()
+print("name: {}".format(a.name))
+if hasattr(a, 'count'):
+  print("count: ", a.count)
