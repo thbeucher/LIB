@@ -61,3 +61,32 @@ class Args:
 #print("name: {}".format(a.name))
 #if hasattr(a, 'count'):
 #  print("count: ", a.count)
+
+
+'''
+tt = "coucou"
+def tt2():
+  print('tt2')
+
+class tt3:
+  def __init__(self):
+    print("tt3")
+
+  def test(self):
+    print("test OK")
+
+mm = {'tt2':tt2, 'tt3': tt3}
+
+myargs = Args(tt=(str, False, tt),tt2=(str, True),tt3=(str, True))
+myargs.resolve_args()
+
+# tt
+myargs.tt
+
+# tt2
+mm[myargs.tt2]()
+
+# tt3
+a = mm[myargs.tt3]()
+a.test()
+'''
